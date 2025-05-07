@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Geolokalizacja</title>
+</head>
+<body>
+  <h1>Sprawdź swoją pozycję GPS</h1>
+  <p>Kliknij przycisk, aby pobrać szerokość, długość i wysokość geograficzną.</p>
+  <button id="locateBtn">Pobierz pozycję</button>
+
+  <script>
+    const btn = document.getElementById('locateBtn');
+
+    btn.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        alert('Geolokalizacja nie jest wspierana przez Twoją przeglądarkę.');
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          const alt = position.coords.altitude;
+          let msg = `Szerokość: ${lat}\nDługość: ${lon}`;
+          if (alt !== null) msg += `\nWysokość: ${alt} m`;
+          alert(msg);
+        },
+        (error) => {
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              alert('Odmowa dostępu do lokalizacji.');
+              break;
+            case error.POSITION_UNAVAILABLE:
+              alert('Brak dostępnej pozycji.');
+              break;
+            case error.TIMEOUT:
+              alert('Przekroczono czas oczekiwania na pozycję.');
+              break;
+            default:
+              alert('Wystąpił nieznany błąd.');
+              break;
+          }
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    });
+  </script>
+</body>
+</html>
