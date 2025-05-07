@@ -4,64 +4,61 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Geolokalizacja i Żyroskop</title>
+  <style>
+    #obrazek {
+      width: 100px;
+      height: 100px;
+      background-color: lightblue;
+      margin-top: 20px;
+      transition: transform 0.2s ease;
+    }
+  </style>
 </head>
 <body>
   <h1>Pozycja GPS i orientacja urządzenia</h1>
-  <p>Kliknij przycisk, aby pobrać współrzędne GPS oraz kąty α, β, γ z żyroskopu.</p>
-  <button id="locateBtn">Pobierz pozycję i orientację</button>
+  <button id="locateBtn">Pobierz pozycję</button>
+  <div>
+    <p id="geoData"></p>
+    <p id="alpha">Alpha: </p>
+    <p id="beta">Beta: </p>
+    <p id="gamma">Gamma: </p>
+    <div id="obrazek"></div>
+  </div>
 
   <script>
-    const btn = document.getElementById('locateBtn');
-
-    btn.addEventListener('click', async () => {
-      // 1) Geolokalizacja
+    document.getElementById('locateBtn').addEventListener('click', () => {
       if (!navigator.geolocation) {
-        alert('Geolokalizacja nie jest wspierana przez Twoją przeglądarkę.');
-      } else {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
-            const alt = position.coords.altitude;
-            let msg = `Szerokość: ${lat}\nDługość: ${lon}`;
-            if (alt !== null) msg += `\nWysokość: ${alt} m`;
-            // Wyświetlimy orientację później
-            geoMsg = msg;
-          },
-          (error) => {
-            alert('Błąd geolokalizacji: ' + error.message);
-          },
-          { enableHighAccuracy: true, timeout: 10000 }
-        );
+        document.getElementById('geoData').innerText = 'Geolokalizacja nie jest wspierana przez Twoją przeglądarkę.';
+        return;
       }
 
-      // 2) Żyroskop / orientacja urządzenia
-      function handleOrientation(e) {
-        const alpha = e.alpha?.toFixed(2);
-        const beta  = e.beta?.toFixed(2);
-        const gamma = e.gamma?.toFixed(2);
-        let oriMsg = `α (alpha): ${alpha}°\nβ (beta): ${beta}°\nγ (gamma): ${gamma}°`;
-        alert((typeof geoMsg !== 'undefined' ? geoMsg + '\n' : '') + oriMsg);
-        window.removeEventListener('deviceorientation', handleOrientation);
-      }
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          const alt = position.coords.altitude;
+          let msg = `Szerokość: ${lat}<br>Długość: ${lon}`;
+          if (alt !== null) msg += `<br>Wysokość: ${alt} m`;
+          document.getElementById('geoData').innerHTML = msg;
+        },
+        (error) => {
+          document.getElementById('geoData').innerText = 'Błąd geolokalizacji: ' + error.message;
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    });
 
-      if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
-        // iOS 13+ wymaga zgody
-        try {
-          const permission = await DeviceOrientationEvent.requestPermission();
-          if (permission === 'granted') {
-            window.addEventListener('deviceorientation', handleOrientation, { once: true });
-          } else {
-            alert('Brak dostępu do czujnika orientacji.');
-          }
-        } catch (err) {
-          alert('Żądanie pozwolenia nie powiodło się: ' + err);
-        }
-      } else if (window.DeviceOrientationEvent) {
-        window.addEventListener('deviceorientation', handleOrientation, { once: true });
-      } else {
-        alert('Żyroskop/orientacja nie jest wspierana przez przeglądarkę.');
-      }
+    window.addEventListener('deviceorientation', function(event) {
+      var alpha = event.alpha?.toFixed(2);
+      var beta = event.beta?.toFixed(2);
+      var gamma = event.gamma?.toFixed(2);
+
+      document.getElementById('alpha').innerText = 'Alpha: ' + alpha;
+      document.getElementById('beta').innerText = 'Beta: ' + beta;
+      document.getElementById('gamma').innerText = 'Gamma: ' + gamma;
+
+      document.getElementById('obrazek').style.transform =
+        'rotate(' + alpha + 'deg) rotateX(' + beta + 'deg) rotateY(' + gamma + 'deg)';
     });
   </script>
 </body>
