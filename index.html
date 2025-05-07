@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Geolokalizacja, Żyroskop i Wibracja</title>
+  <title>Geolokalizacja, Żyroskop, Wibracja i Kamera</title>
   <style>
     #obrazek {
       width: 100px;
@@ -17,18 +17,27 @@
       padding: 10px 15px;
       font-size: 1rem;
     }
+    video {
+      width: 300px;
+      height: auto;
+      margin-top: 20px;
+      border: 2px solid #333;
+    }
   </style>
 </head>
 <body>
-  <h1>Pozycja GPS, orientacja urządzenia i wibracja</h1>
+  <h1>Pozycja GPS, orientacja, wibracja i podgląd z kamerki</h1>
   <button id="locateBtn">Pobierz pozycję</button>
   <button id="vibrateBtn">Wibracja 200ms</button>
+  <button id="cameraBtn">Włącz kamerę</button>
+
   <div>
     <p id="geoData"></p>
     <p id="alpha">Alpha: </p>
     <p id="beta">Beta: </p>
     <p id="gamma">Gamma: </p>
     <div id="obrazek"></div>
+    <video id="video" autoplay playsinline></video>
   </div>
 
   <script>
@@ -71,6 +80,21 @@
         navigator.vibrate(200);
       } else {
         alert('API wibracji nie jest wspierane przez przeglądarkę.');
+      }
+    });
+
+    // Kamera
+    document.getElementById('cameraBtn').addEventListener('click', async () => {
+      const video = document.getElementById('video');
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('Kamera nie jest wspierana przez przeglądarkę.');
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        video.srcObject = stream;
+      } catch (err) {
+        alert('Nie można uzyskać dostępu do kamery: ' + err.message);
       }
     });
   </script>
