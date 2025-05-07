@@ -3,49 +3,65 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Geolokalizacja</title>
+  <title>Geolokalizacja i Żyroskop</title>
 </head>
 <body>
-  <h1>Sprawdź swoją pozycję GPS</h1>
-  <p>Kliknij przycisk, aby pobrać szerokość, długość i wysokość geograficzną.</p>
-  <button id="locateBtn">Pobierz pozycję</button>
+  <h1>Pozycja GPS i orientacja urządzenia</h1>
+  <p>Kliknij przycisk, aby pobrać współrzędne GPS oraz kąty α, β, γ z żyroskopu.</p>
+  <button id="locateBtn">Pobierz pozycję i orientację</button>
 
   <script>
     const btn = document.getElementById('locateBtn');
 
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
+      // 1) Geolokalizacja
       if (!navigator.geolocation) {
         alert('Geolokalizacja nie jest wspierana przez Twoją przeglądarkę.');
-        return;
+      } else {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const alt = position.coords.altitude;
+            let msg = `Szerokość: ${lat}\nDługość: ${lon}`;
+            if (alt !== null) msg += `\nWysokość: ${alt} m`;
+            // Wyświetlimy orientację później
+            geoMsg = msg;
+          },
+          (error) => {
+            alert('Błąd geolokalizacji: ' + error.message);
+          },
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
       }
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          const alt = position.coords.altitude;
-          let msg = `Szerokość: ${lat}\nDługość: ${lon}`;
-          if (alt !== null) msg += `\nWysokość: ${alt} m`;
-          alert(msg);
-        },
-        (error) => {
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              alert('Odmowa dostępu do lokalizacji.');
-              break;
-            case error.POSITION_UNAVAILABLE:
-              alert('Brak dostępnej pozycji.');
-              break;
-            case error.TIMEOUT:
-              alert('Przekroczono czas oczekiwania na pozycję.');
-              break;
-            default:
-              alert('Wystąpił nieznany błąd.');
-              break;
+      // 2) Żyroskop / orientacja urządzenia
+      function handleOrientation(e) {
+        const alpha = e.alpha?.toFixed(2);
+        const beta  = e.beta?.toFixed(2);
+        const gamma = e.gamma?.toFixed(2);
+        let oriMsg = `α (alpha): ${alpha}°\nβ (beta): ${beta}°\nγ (gamma): ${gamma}°`;
+        alert((typeof geoMsg !== 'undefined' ? geoMsg + '\n' : '') + oriMsg);
+        window.removeEventListener('deviceorientation', handleOrientation);
+      }
+
+      if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
+        // iOS 13+ wymaga zgody
+        try {
+          const permission = await DeviceOrientationEvent.requestPermission();
+          if (permission === 'granted') {
+            window.addEventListener('deviceorientation', handleOrientation, { once: true });
+          } else {
+            alert('Brak dostępu do czujnika orientacji.');
           }
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
+        } catch (err) {
+          alert('Żądanie pozwolenia nie powiodło się: ' + err);
+        }
+      } else if (window.DeviceOrientationEvent) {
+        window.addEventListener('deviceorientation', handleOrientation, { once: true });
+      } else {
+        alert('Żyroskop/orientacja nie jest wspierana przez przeglądarkę.');
+      }
     });
   </script>
 </body>
