@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Geolokalizacja i Żyroskop</title>
+  <title>Geolokalizacja, Żyroskop i Wibracja</title>
   <style>
     #obrazek {
       width: 100px;
@@ -12,11 +12,17 @@
       margin-top: 20px;
       transition: transform 0.2s ease;
     }
+    button {
+      margin: 5px;
+      padding: 10px 15px;
+      font-size: 1rem;
+    }
   </style>
 </head>
 <body>
-  <h1>Pozycja GPS i orientacja urządzenia</h1>
+  <h1>Pozycja GPS, orientacja urządzenia i wibracja</h1>
   <button id="locateBtn">Pobierz pozycję</button>
+  <button id="vibrateBtn">Wibracja 200ms</button>
   <div>
     <p id="geoData"></p>
     <p id="alpha">Alpha: </p>
@@ -26,39 +32,46 @@
   </div>
 
   <script>
+    // Geolokalizacja
     document.getElementById('locateBtn').addEventListener('click', () => {
+      const geoEl = document.getElementById('geoData');
       if (!navigator.geolocation) {
-        document.getElementById('geoData').innerText = 'Geolokalizacja nie jest wspierana przez Twoją przeglądarkę.';
+        geoEl.innerText = 'Geolokalizacja nie jest wspierana przez Twoją przeglądarkę.';
         return;
       }
-
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          const alt = position.coords.altitude;
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          const alt = pos.coords.altitude;
           let msg = `Szerokość: ${lat}<br>Długość: ${lon}`;
           if (alt !== null) msg += `<br>Wysokość: ${alt} m`;
-          document.getElementById('geoData').innerHTML = msg;
+          geoEl.innerHTML = msg;
         },
-        (error) => {
-          document.getElementById('geoData').innerText = 'Błąd geolokalizacji: ' + error.message;
-        },
+        (err) => { geoEl.innerText = 'Błąd geolokalizacji: ' + err.message; },
         { enableHighAccuracy: true, timeout: 10000 }
       );
     });
 
+    // Żyroskop
     window.addEventListener('deviceorientation', function(event) {
       var alpha = event.alpha?.toFixed(2);
       var beta = event.beta?.toFixed(2);
       var gamma = event.gamma?.toFixed(2);
-
       document.getElementById('alpha').innerText = 'Alpha: ' + alpha;
       document.getElementById('beta').innerText = 'Beta: ' + beta;
       document.getElementById('gamma').innerText = 'Gamma: ' + gamma;
-
       document.getElementById('obrazek').style.transform =
         'rotate(' + alpha + 'deg) rotateX(' + beta + 'deg) rotateY(' + gamma + 'deg)';
+    });
+
+    // Wibracja
+    document.getElementById('vibrateBtn').addEventListener('click', () => {
+      if (navigator.vibrate) {
+        navigator.vibrate(200);
+      } else {
+        alert('API wibracji nie jest wspierane przez przeglądarkę.');
+      }
     });
   </script>
 </body>
