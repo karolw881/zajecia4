@@ -33,6 +33,18 @@
   <div id="obrazek">Obróć mnie</div>
   <video id="video" autoplay playsinline></video>
 
+
+  <div id="output">
+    <p id="nfc">NFC: –</p>
+    <!-- tutaj wyświetlimy szczegóły rekordów -->
+    <div id="nfc-block" style="border:1px solid #ccc; padding:8px; margin-top:6px; display:none;">
+      <strong>Detale NFC:</strong>
+      <ul id="nfc-details"></ul>
+    </div>
+  </div>
+
+
+
   <script>
   // 1) Geolokalizacja
   document.getElementById('geo-btn').addEventListener('click', () => {
@@ -83,27 +95,52 @@
     }
   });
 
-  // 6) NFC
   document.getElementById('nfc-btn').addEventListener('click', async () => {
-    if (!('NDEFReader' in window)) {
-      return alert('Web NFC nie jest wspierane w tej przeglądarce');
-    }
-    try {
-      const reader = new NDEFReader();
-      await reader.scan();
-      reader.onreading = event => {
-        let msg = '';
-        for (const record of event.message.records) {
-          const textDecoder = new TextDecoder(record.encoding || 'utf-8');
-          msg += textDecoder.decode(record.data) + ' ';
+  if (!('NDEFReader' in window)) {
+    return alert('Web NFC nie jest wspierane w tej przeglądarce');
+  }
+  try {
+    const reader = new NDEFReader();
+    await reader.scan();
+    alert('NFC: nasłuchiwanie włączone – przyłóż tag');
+
+    reader.onreading = event => {
+      // pokaż prosty komunikat
+      document.getElementById('nfc').innerText = 'NFC: odczytano ' + event.message.records.length + ' rekord(ów)';
+
+      // przygotuj blok detali
+      const block = document.getElementById('nfc-block');
+      const list  = document.getElementById('nfc-details');
+      list.innerHTML = '';         // wyczyść poprzednie
+      block.style.display = 'block';
+
+      // dla każdego rekordu do listy dodaj li z właściwościami
+      event.message.records.forEach((record, i) => {
+        // dekoduj payload jako tekst (jeśli możliwe)
+        let decoded;
+        try {
+          const decoder = new TextDecoder(record.encoding || 'utf-8');
+          decoded = decoder.decode(record.data);
+        } catch {
+          decoded = '<nie-tekstowy>';
         }
-        document.getElementById('nfc').innerText = 'NFC: ' + msg.trim();
-      };
-      alert('NFC: nasłuchiwanie włączone – przyłóż tag');
-    } catch (err) {
-      alert('Błąd NFC: ' + err.message);
-    }
-  });
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <strong>Record ${i+1}</strong><br>
+          • recordType: ${record.recordType}<br>
+          • mediaType: ${record.mediaType || '–'}<br>
+          • id: ${record.id || '–'}<br>
+          • data: ${decoded}
+        `;
+        list.appendChild(li);
+      });
+    };
+
+  } catch (err) {
+    alert('Błąd NFC: ' + err.message);
+  }
+});
+
   </script>
 </body>
 </html>
