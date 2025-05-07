@@ -100,7 +100,19 @@
       }
     });
 
-    
+    document.getElementById('battery-btn').addEventListener('click', function () {
+  if (navigator.getBattery) {
+    navigator.getBattery().then(function(battery) {
+      const level = Math.round(battery.level * 100);
+      alert('Poziom baterii: ' + level + '%');
+    });
+  } else {
+    alert('Battery Status API nie jest wspierane w tej przeglądarce.');
+  }
+});
+
+
+
   </script>
 </body>
 </html>
